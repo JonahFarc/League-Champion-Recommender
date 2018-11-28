@@ -8,10 +8,10 @@ url_mastery = "champion-mastery/v3/champion-masteries/by-summoner/"
 url_summ_name = "summoner/v3/summoners/by-name/"
 url_feat_games = "spectator/v3/featured-games"
 url_version = "https://ddragon.leagueoflegends.com/realms/na.json"
-API_KEY = "RGAPI-a591f218-0a54-4ea4-94b0-b290a06ccb7d"
+API_KEY = "REMOVED"
 
-file = open("roster2.csv", "a", 1)
-file.write("SummonerName, SummonerId, SummonerLevel, ChampionName, ChampionId, MasteryPoints, MasteryLevel, Last Played Acc Date, Last Played Champ Date\n")
+file = open("roster.csv", "a", 1)
+file.write("Summoner Name,Summoner Id,Summoner Level,Champion Name,Champion Id,Mastery Points,Mastery Level,Last Played Acc Date,Last Played Champ Date\n")
 used_summoners = []
 
 champ_version = json.loads(requests.get(url_version).content)["n"]["champion"]
@@ -48,12 +48,9 @@ while (True):
                             mast_json = json.loads(mast_response.content)
                             print("Mastery Json: " + str(mast_json))
                             for x in range(0, len(mast_json)):
-                                if x == 0:
-                                    print(
-                                        "SummonerName, SummonerId, SummonerLevel, ChampionName, ChampionId, MasteryPoints, MasteryLevel")
                                 if x > 2:
                                     break
-                                text = "{SummonerName}, {SummonerId}, {SummonerLevel}, {ChampionName}, {ChampionId}, {MasteryPoints}, {MasteryLevel}, {LastPlayedAcc}, {LastPlayedChamp}".format(
+                                text = "{SummonerName},{SummonerId},{SummonerLevel},{ChampionName},{ChampionId},{MasteryPoints},{MasteryLevel},{LastPlayedAcc},{LastPlayedChamp}".format(
                                     SummonerName=summ_json["name"],
                                     SummonerId=summonerid,
                                     SummonerLevel=summ_json["summonerLevel"],

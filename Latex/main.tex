@@ -24,12 +24,12 @@ $$
 $$
 \section{Experimental Evaluation}
 \subsection{Methodology}
-\subsubsection{Building a recommender}
-Slope One uses ratings of users in order to build a model that can provide recommendations \cite{Lemire_2005}. While we do not have explicit ratings of how much a player enjoys a champion, we are able to find their preferences based on how often they play a champion. We pulled champion preferences of 2000 random active\footnote{User has played within the last year} players using Riot’s official API \cite{riotapi} in order to train our model. These champion preferences are represented as Champion Mastery Points $(C_{MP})$, which is an integer measure of how often a player plays a certain champion. A player has a $C_{MP}$ for each champion in the game, where: 
+\subsubsection{Building a dataset}
+Slope One uses ratings of users in order to build a model that can provide recommendations \cite{Lemire_2005}. While we do not have explicit ratings of how much a player enjoys a champion, we are able to find their preferences based on how often they play a champion. We pulled champion preferences of 2514 random active\footnote{User has played within the last year} players using Riot’s official API \cite{riotapi} in order to train our model. These champion preferences are represented as Champion Mastery Points $(C_{MP})$, which is an integer measure of how often a player plays a certain champion. A player has a $C_{MP}$ for each champion in the game, where: 
 $$
 0 \ \leq C_{MP} \ \textless \ \infty
 $$
-The preferences we use in our recommender system then are not discursively provided preferences like movie ratings for example, but rather behaviorally observed preferences. The use of $C_{MP}$ serves our aims well, as behaviorally observed preferences are more indicative of true preferences, and we can easily gain access to large datasets as Riot's API \cite{riotapi} allows us to grab each player's mastery points of all champions. We then used this dataset of 2000 random players and their respective $C_{MP}$ values to build our recommender. Our dataset is available at \cite{nothereyet}
+The preferences we use in our recommender system then are not discursively provided preferences like movie ratings for example, but rather behaviorally observed preferences. The use of $C_{MP}$ serves our aims well, as behaviorally observed preferences are more indicative of true preferences, and we can easily gain access to large datasets as Riot's API \cite{riotapi} allows us to grab each player's mastery points of all champions. We then used this dataset of 2514 random players and their respective $C_{MP}$ values to build our recommender. However, because $0 \ \leq C_{MP} \ \textless \ \infty$, we normalized these scores to a scale of 1-10 using a $ln$ normalization (PUT MORE HERE). Our dataset and code is available at \cite{github}. 
 \subsubsection{Finding recommendations}
 We queried the system with a player's summoner name and used Riot's API in order to find their player ID. We then used this ID to find their top three champions sorted by $C_{MP}$. We selected only the top three champions as $C_{MP}$ are not ratings and a low $C_{MP}$ does not necessarily mean that a player does not enjoy a champion. We used these three $C_{MP}$ as $R_i(u)$ to find each $\hat{r}_{ui} : \forall i \in Champions$. Below is an example of a sample player's top three $C_{MP}$. \\\\
 \begin{tabular}{| l | l |}
@@ -43,13 +43,13 @@ We queried the system with a player's summoner name and used Riot's API in order
 \vspace{.2cm} \\ \noindent
 After the system calculates each $\hat{r}_{ui}$, it sorts these scores and outputs the top three respective champions as recommendations. 
 \subsection{Results}
-none yet lul.
+TBA.
 \subsection{Discussion}
-As $n=3$ experts in the field, we think this is aight.
+As $n=3$ experts in the field, we think this is aight (TBA).
 \section{Future Work}
-Future work would mainly detail an evaluation of the results. While we believe that our recommendations are suitable for a user, it would be important to run a study to see if a user actually does enjoy their champion recommendations. A possible study could be designed to give a user $n$ recommendations that contain a fixed number of recommendations selected by our system as well as random recommendations. We could then ask a user to rate each champion after playing it and see if the system recommendations score significantly higher than a random recommendation.
+Future work would mainly detail an evaluation of the results. While we believe that our recommendations are suitable for a user, it would be important to run a study to see if a user actually does enjoy their champion recommendations. A possible study could be designed to give a user $n$ recommendations that contain a fixed number of recommendations selected by our system as well as random recommendations. We could then ask a user to rate each champion after playing it and see if the system recommendations score significantly higher than a random recommendation. \\ \indent In addition, the algorithm loads in the dataset each time it is compiled. This dataset is very large and contains 311,000 rows. A future implementation could store data in a database such as MySQL and reduce runtime significantly, especially with extremely large datasets. 
 \section{Conclusion}
-League of legends is a good game.
+League of legends is a good game (TBA).
 \nocite{*}
 \bibliographystyle{IEEEtran}
 \bibliography{annot}

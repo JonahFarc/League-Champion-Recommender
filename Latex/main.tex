@@ -1,0 +1,56 @@
+\documentclass [11pt]{IEEEtran}
+\usepackage[margin=1in]{geometry}
+\usepackage{mathtools, amsmath, amssymb}
+\title{League of Legends Champion Recommendation System Using Collaborative Filtering\\ {\large CS 6375.003}}
+\author{Tiffany Do, \and Dylan Yu, \and Salman Anwer}
+
+\begin{document}
+\maketitle
+\section{Introduction}
+League of Legends, originally released in 2009 by Riot, is the most widely played game worldwide \cite{gaudiosi_2013}. There is an estimated 100 million active players each month as of 2016 \cite{volk_2016}. The game currently has 141 playable characters, known as champions, from which players can choose from at the start of every match \cite{champlist}. These champions have widely varied play styles and abilities that allow a player to truly customize their way of playing League of Legends. With so many available champions, we wanted to create a recommendation system that would enable players to find out what other champions they might like based on their current champion preferences.
+
+\section{Problem Definition and Algorithm}
+\subsection{Task Definition}
+The input to our system is a player’s unique username, known as a summoner name. We then pull this player’s champion preferences, compare these preferences with our model, and output three recommended champions.
+\subsection{Algorithm Definition}
+We built champion recommendations using an item-to-item collaborative filtering approach \cite{Sarwar:2001}, specifically the Slope One algorithm \cite{Lemire_2005}. We chose this 2016 Seoul Test of Time award winning \cite{um} approach, for its strong anti-overfitting properties and low space and computational complexity. We used a straightforward Python implementation of the Slope One algorithm called Surprise \cite{Surprise}. \midskip
+This implementation calculates a prediction $\hat{r}_{ui}$ using the following equation:
+$$
+    \hat{r}_{ui} = \mu_u + \frac{1}{|{R_i(u)}|}\sum_{j\in R_i(u)} dev(i,j)
+$$
+where $R_i(u)$ is the set of relevant items, or the set of items $j$ rated by user $u$ that also have at least one common user with $i$. $dev(i,j)$ is the average difference between ratings of $i$ and $j$, defined as:
+$$
+    dev(i,j) = \frac{1}{|{U_{ij}}|}\sum_{u\in U_{ij}} r_{ui} - r_{uj}
+$$
+\section{Experimental Evaluation}
+\subsection{Methodology}
+\subsubsection{Building a recommender}
+Slope One uses ratings of users in order to build a model that can provide recommendations \cite{Lemire_2005}. While we do not have explicit ratings of how much a player enjoys a champion, we are able to find their preferences based on how often they play a champion. We pulled champion preferences of 2000 random active\footnote{User has played within the last year} players using Riot’s official API \cite{riotapi} in order to train our model. These champion preferences are represented as Champion Mastery Points $(C_{MP})$, which is an integer measure of how often a player plays a certain champion. A player has a $C_{MP}$ for each champion in the game, where: 
+$$
+0 \ \leq C_{MP} \ \textless \ \infty
+$$
+The preferences we use in our recommender system then are not discursively provided preferences like movie ratings for example, but rather behaviorally observed preferences. The use of $C_{MP}$ serves our aims well, as behaviorally observed preferences are more indicative of true preferences, and we can easily gain access to large datasets as Riot's API \cite{riotapi} allows us to grab each player's mastery points of all champions. We then used this dataset of 2000 random players and their respective $C_{MP}$ values to build our recommender. Our dataset is available at \cite{nothereyet}
+\subsubsection{Finding recommendations}
+We queried the system with a player's summoner name and used Riot's API in order to find their player ID. We then used this ID to find their top three champions sorted by $C_{MP}$. We selected only the top three champions as $C_{MP}$ are not ratings and a low $C_{MP}$ does not necessarily mean that a player does not enjoy a champion. We used these three $C_{MP}$ as $R_i(u)$ to find each $\hat{r}_{ui} : \forall i \in Champions$. Below is an example of a sample player's top three $C_{MP}$. \\\\
+\begin{tabular}{| l | l |}
+    \hline
+    Champion & $C_{MP}$ \\ \hline
+    Nami & 367,191  \\ 
+    Zyra & 136,709 \\
+    Cassiopeia & 106,064 \\
+    \hline
+\end{tabular}
+\vspace{.2cm} \\ \noindent
+After the system calculates each $\hat{r}_{ui}$, it sorts these scores and outputs the top three respective champions as recommendations. 
+\subsection{Results}
+none yet lul.
+\subsection{Discussion}
+As $n=3$ experts in the field, we think this is aight.
+\section{Future Work}
+Future work would mainly detail an evaluation of the results. While we believe that our recommendations are suitable for a user, it would be important to run a study to see if a user actually does enjoy their champion recommendations. A possible study could be designed to give a user $n$ recommendations that contain a fixed number of recommendations selected by our system as well as random recommendations. We could then ask a user to rate each champion after playing it and see if the system recommendations score significantly higher than a random recommendation.
+\section{Conclusion}
+League of legends is a good game.
+\nocite{*}
+\bibliographystyle{IEEEtran}
+\bibliography{annot}
+\end{document}

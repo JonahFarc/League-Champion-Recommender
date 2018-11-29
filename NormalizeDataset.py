@@ -1,8 +1,8 @@
-from math import ceil, log1p
+from math import log1p
 
 #open files to read from and write to
 readfile = open("rosterFIXED.csv", "r")
-file = open("rosterLnNORMALIZED.csv", "w", 1)
+file = open("rosterLaanNORMALIZED.csv", "w", 1)
 file.write(
     "Summoner Name,Summoner Id,Summoner Level,Champion Name,Champion Id,Mastery Points,Normalized Mastery Points,Mastery Level,Last Played Acc Date,Last Played Champ Date\n")
 
@@ -19,13 +19,13 @@ for line in readfile:
     #Normalization method here
     if data[1] in summoners.keys():
         #Natural Log Version
-        normalizedpoints = ceil(log1p(int(data[5])) / summoners[data[1]] * 100)
+        normalizedpoints = round(log1p(int(data[5])) / summoners[data[1]] * 5, 2)
 
         #Straight Normalized
         #normalizedpoints = ceil(log1p(int(data[5])) / summoners[data[1]] * 100)
 
     else:
-        normalizedpoints = 100
+        normalizedpoints = 5;
         #Natural Log Version
         summoners[data[1]] = log1p(int(data[5]))
 

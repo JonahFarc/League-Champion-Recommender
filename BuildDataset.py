@@ -19,11 +19,10 @@ for champ in champ_json["data"].keys():
     champ_map[champ_json["data"][champ]["key"]] = champ_json["data"][champ]["name"]
 
 # open file to write to
-file = open("roster50.csv", "a", 1)
-file.write(
-    "Summoner Name,Summoner Id,Summoner Level,Champion Name,Champion Id,Mastery Points,Mastery Level,Last Played Acc Date,Last Played Champ Date\n")
+file = open("roster.csv", "a", 1)
+# file.write(
+#     "Summoner Name,Summoner Id,Summoner Level,Champion Name,Champion Id,Mastery Points,Mastery Level,Last Played Acc Date,Last Played Champ Date\n")
 used_summoners = []
-
 
 # Loop until program manually exited
 while (True):

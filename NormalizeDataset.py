@@ -1,7 +1,7 @@
 from math import ceil
 
 def normalize(file1, file2):
-    #open files to read from and write to
+    # open files to read from and write to
     readfile = open(file1, "r")
     file = open(file2, "w", 1)
     file.write(
@@ -10,30 +10,30 @@ def normalize(file1, file2):
     summoners = {}
     header = True
     for line in readfile:
-        #skip header
+        # skip header
         if header:
             header = False
             continue
 
         data = line.split(',')
 
-        #Normalization method here
+        # Normalization method here
         if data[1] in summoners.keys():
-            #Natural Log Version
-            #normalizedpoints = round(log1p(int(data[5])) / summoners[data[1]] * 5, 2)
+            # Natural Log Version
+            # normalizedpoints = round(log1p(int(data[5])) / summoners[data[1]] * 5, 2)
 
-            #Straight Normalized
+            # Straight Normalized
             normalizedpoints = ceil(int(data[5]) / summoners[data[1]] * 100)
 
         else:
-            #normalizedpoints = 5;
-            #Natural Log Version
-            #summoners[data[1]] = log1p(int(data[5]))
+            # normalizedpoints = 5;
+            # Natural Log Version
+            # summoners[data[1]] = log1p(int(data[5]))
 
-            #Straight Normalized
+            # Straight Normalized
             summoners[data[1]] = int(data[5])
 
-        #write text to file
+        # write text to file
         text = "{SummonerName},{SummonerId},{SummonerLevel},{ChampionName},{ChampionId},{MasteryPoints},{MasteryPointsNormalized},{MasteryLevel},{LastPlayedAcc},{LastPlayedChamp}".format(
             SummonerName=data[0],
             SummonerId=data[1],
@@ -48,4 +48,5 @@ def normalize(file1, file2):
         print(text)
         file.write(text)
 
-    normalize("rosterFIXED.csv", "rosterNORMALIZED.csv")
+
+normalize("roster.csv", "normalized_roster.csv")

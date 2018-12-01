@@ -1,8 +1,8 @@
 from math import log1p
 
 #open files to read from and write to
-readfile = open("rosterLaanNORMALIZED.csv", "r")
-file = open("final_roster.csv", "w", 1)
+readfile = open("rosterNORMALIZED.csv", "r")
+file = open("final_roster2.csv", "w", 1)
 file.write(
     "Summoner Id,Champion Id,Normalized Mastery Points\n")
 summoners = {}

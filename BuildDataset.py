@@ -10,12 +10,6 @@ url_feat_games = "spectator/v3/featured-games"
 url_version = "https://ddragon.leagueoflegends.com/realms/na.json"
 API_KEY = "REMOVED"
 
-# open file to write to
-file = open("roster50.csv", "a", 1)
-file.write(
-    "Summoner Name,Summoner Id,Summoner Level,Champion Name,Champion Id,Mastery Points,Mastery Level,Last Played Acc Date,Last Played Champ Date\n")
-used_summoners = []
-
 # Create a champion map to map the champion's id number to their name
 champ_version = requests.get(url_version).json()["n"]["champion"]
 champ_map = {}
@@ -23,6 +17,13 @@ champ_response = requests.get("http://ddragon.leagueoflegends.com/cdn/" + champ_
 champ_json = champ_response.json()
 for champ in champ_json["data"].keys():
     champ_map[champ_json["data"][champ]["key"]] = champ_json["data"][champ]["name"]
+
+# open file to write to
+file = open("roster50.csv", "a", 1)
+file.write(
+    "Summoner Name,Summoner Id,Summoner Level,Champion Name,Champion Id,Mastery Points,Mastery Level,Last Played Acc Date,Last Played Champ Date\n")
+used_summoners = []
+
 
 # Loop until program manually exited
 while (True):

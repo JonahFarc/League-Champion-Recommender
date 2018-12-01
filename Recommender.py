@@ -11,12 +11,17 @@ url_mastery = "champion-mastery/v3/champion-masteries/by-summoner/"
 url_summ_name = "summoner/v3/summoners/by-name/"
 API_KEY = "RGAPI-fe8e85f4-572e-41b0-94bc-7ad2dbb1c847"
 
+roster = 'user-study-roster.csv'
+max_champs = 5
+num_predictions = 5  # set to 'max' to return all predictions in descending order
+
 def get_mastery_from_id(summonerid, max_champs):
     """
     Pulls the Mastery information from Riot's API, the top 5 champions of the summoner,
     and their normalized mastery points
 
     :param summonerid: id of summoner to pull information from
+    :param max_champs: maximum number of champs to pull mastery from
     :return: dictionary containing top 5 champions and their normalized mastery points
     """
     # Pull information about champion mastery from riot API
@@ -52,6 +57,7 @@ def get_mastery(summonername, max_champs):
     from get_mastery_from_id
 
     :param summonername: name of the summoner to pull information of
+    :param max_champs: maximum number champions to pull mastery of
     :returns: summonerid, ratings_dict: ID of the summoner, dictionary containing normalized masteries of the summoner's top 5 champions
     """
     # Pull info about the summoner
@@ -72,7 +78,7 @@ def get_mastery(summonername, max_champs):
     summonerid = summ_json["id"]
     return summonerid, get_mastery_from_id(summonerid, max_champs), summ_json["name"]
 
-def get_top_n(predictions, n=3):
+def get_top_n(predictions, n=5):
     """
     Return the top-N recommendation for each user from a set of predictions.
 
@@ -80,7 +86,7 @@ def get_top_n(predictions, n=3):
         predictions(list of Prediction objects): The list of predictions, as
             returned by the test method of an algorithm.
         n(int): The number of recommendation to output for each user. Default
-            is 10.
+            is 5.
 
     Returns:
     A dict where keys are user (raw) ids and values are lists of tuples:
@@ -154,7 +160,7 @@ champ_map = {'266': 'Aatrox', '103': 'Ahri', '84': 'Akali', '12': 'Alistar', '32
 summoners = {}
 
 # read info from roster
-df = pd.read_csv('final_roster.csv', header=None, names=['userID', 'itemID', 'rating'])
+df = pd.read_csv(roster, header=None, names=['userID', 'itemID', 'rating'])
 mean = df['rating'].mean()
 dfreader = Reader(rating_scale=(1, 100))
 # data = Dataset.load_from_df(df[['userID', 'itemID', 'rating']], dfreader)
@@ -162,6 +168,7 @@ dfreader = Reader(rating_scale=(1, 100))
 # trainset = data.build_full_trainset()
 
 algo = SVD()
+algo.random_state = 1
 # print("Generating algorithm... (This may take a while)")
 # algo.fit(trainset)
 '''
@@ -179,7 +186,6 @@ for trainer, tester in kf.split(data):
 '''
 # print("All ready!")
 while True:
-    max_champs = 5
     summ_name = input("What is your summoner name?\n")  # "Naru"
     summ_id, ratings_dict, summ_name = get_mastery(summ_name, max_champs)
 
@@ -216,7 +222,7 @@ while True:
 
     # Get the results from applying the algorithm to the summoner
     predictions = algo.test(testset, verbose=False)
-    top_n = get_top_n(predictions, 5)
+    top_n = get_top_n(predictions, num_predictions)
 
     output = ""
     for x in range(0, len(champ_map) - length):

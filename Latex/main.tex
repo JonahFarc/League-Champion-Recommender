@@ -11,9 +11,19 @@ League of Legends, originally released in 2009 by Riot, is the most widely playe
 
 \section{Problem Definition and Algorithm}
 \subsection{Task Definition}
-The input to our system is a player’s unique username, known as a summoner name. We then pull this player’s champion preferences, compare these preferences with our model, and output three recommended champions.
+The input to our system is a player’s unique username, known as a summoner name. We then pull this player’s champion preferences, compare these preferences with our model, and output five recommended champions.
 \subsection{Algorithm Definition}
-We built champion recommendations using an item-to-item collaborative filtering approach \cite{Sarwar:2001}, specifically the SVD algorithm (singular value decomposition). We chose this approach due to it's success in predicting Netflix recommendations, which we believe is similar to champion preferences as both are based on behaviorally observed data \cite{paterek2007improving}. We used a straightforward Python implementation of the SVD algorithm called Surprise \cite{Surprise}. \midskip
+We built champion recommendations using an 
+%item-to-item 
+\textbf{item-based}
+collaborative filtering approach \cite{Sarwar:2001}, specifically the SVD algorithm (singular value decomposition). 
+\textbf{This domain is suitable for collaborative filtering as there is a massive base of users with diverse tastes and high user engagement, thereby avoiding the common issues of cold starts, rating sparsity, and user homogeneity.} 
+%\textbf{Thus the common issues of cold starts, rating sparsity, and user homogeneity in collaborative filtering are avoided.}
+\textbf{The SVD algorithm provides low rank factor discovery and user-champion mapping onto this latent space, thereby mitigating popularity bias and strongly tailoring champion recommendations to a user's specific taste.}
+%We chose this approach due to its
+\textbf{Furthermore, its}
+success in predicting Netflix recommendations, which we believe is similar to champion preferences as both are based on behaviorally observed data \cite{paterek2007improving}. 
+We used a straightforward Python implementation of the SVD algorithm called Surprise \cite{Surprise}. \midskip
 This implementation calculates a prediction $\hat{r}_{ui}$ using the following equation:
 $$
     \hat{r}_{ui} = \mu + b_u + b_i + q_i^Tp_u

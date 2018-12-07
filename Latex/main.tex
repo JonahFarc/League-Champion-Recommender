@@ -1,6 +1,6 @@
 \documentclass [11pt]{IEEEtran}
 \usepackage[margin=1in]{geometry}
-\usepackage{mathtools, amsmath, amssymb}
+\usepackage{mathtools, amsmath, amssymb, upgreek}
 \title{League of Legends Champion Recommendation System Using Collaborative Filtering\\ {\large CS 6375.003}}
 \author{Tiffany Do, \and Dylan Yu, \and Salman Anwer}
 
@@ -13,43 +13,114 @@ League of Legends, originally released in 2009 by Riot, is the most widely playe
 \subsection{Task Definition}
 The input to our system is a player’s unique username, known as a summoner name. We then pull this player’s champion preferences, compare these preferences with our model, and output three recommended champions.
 \subsection{Algorithm Definition}
-We built champion recommendations using an item-to-item collaborative filtering approach \cite{Sarwar:2001}, specifically the Slope One algorithm \cite{Lemire_2005}. We chose this 2016 Seoul Test of Time award winning \cite{um} approach, for its strong anti-overfitting properties and low space and computational complexity. We used a straightforward Python implementation of the Slope One algorithm called Surprise \cite{Surprise}. \midskip
+We built champion recommendations using an item-to-item collaborative filtering approach \cite{Sarwar:2001}, specifically the SVD algorithm (singular value decomposition). We chose this approach due to it's success in predicting Netflix recommendations, which we believe is similar to champion preferences as both are based on behaviorally observed data \cite{paterek2007improving}. We used a straightforward Python implementation of the SVD algorithm called Surprise \cite{Surprise}. \midskip
 This implementation calculates a prediction $\hat{r}_{ui}$ using the following equation:
 $$
-    \hat{r}_{ui} = \mu_u + \frac{1}{|{R_i(u)}|}\sum_{j\in R_i(u)} dev(i,j)
+    \hat{r}_{ui} = \mu + b_u + b_i + q_i^Tp_u
 $$
-where $R_i(u)$ is the set of relevant items, or the set of items $j$ rated by user $u$ that also have at least one common user with $i$. $dev(i,j)$ is the average difference between ratings of $i$ and $j$, defined as:
+Where if user $u$ is unknown, then the bias $b_u$ and factors $p_u$ are zero. The same applies for item $i$ and $b_i$ and $q_i$. The estimations are done by minimizing the squared error function
+\cite{koren2009matrix} :
 $$
-    dev(i,j) = \frac{1}{|{U_{ij}}|}\sum_{u\in U_{ij}} r_{ui} - r_{uj}
+    \min_{p*,q*,b*} \sum_{r_{ui} \in R_{train}} \left(r_{ui} - \hat{r}_{ui} \right)^2 + 
+\lambda\left(b_i^2 + b_u^2 + ||q_i||^2 + ||p_u||^2\right)
 $$
+which is done by stochastic gradient descent:
+\begin{align*}
+b_u &\leftarrow b_u + \gamma (e_{ui} - \lambda b_u)\\
+b_i &\leftarrow b_i + \gamma (e_{ui} - \lambda b_i)\\
+p_u &\leftarrow p_u + \gamma (e_{ui} \cdot q_i - \lambda p_u)\\
+q_i &\leftarrow q_i + \gamma (e_{ui} \cdot p_u - \lambda q_i)
+\end{align*}
+where $e_{ui} = r_{ui} - \hat{r}_{ui}$. Baselines are initialized to zero and user and item factors are randomly distributed according to normal distribution \cite{Surprise}.
 \section{Experimental Evaluation}
 \subsection{Methodology}
 \subsubsection{Building a dataset}
-Slope One uses ratings of users in order to build a model that can provide recommendations \cite{Lemire_2005}. While we do not have explicit ratings of how much a player enjoys a champion, we are able to find their preferences based on how often they play a champion. We pulled champion preferences of 2514 random active\footnote{User has played within the last year} players using Riot’s official API \cite{riotapi} in order to train our model. These champion preferences are represented as Champion Mastery Points $(C_{MP})$, which is an integer measure of how often a player plays a certain champion. A player has a $C_{MP}$ for each champion in the game, where: 
+SVD uses ratings of users in order to build a model that can provide recommendations \cite{koren2009matrix}. While we do not have explicit ratings of how much a player enjoys a champion, we are able to find their preferences based on how often they play a champion. We pulled champion preferences of 2514 random active\footnote{User has played within the last month} players using Riot’s official API \cite{riotapi} in order to train our model. These champion preferences are represented as Champion Mastery Points $(C_{MP})$, which is an integer measure of how much a player has played a certain champion. A player has a $C_{MP}$ for each champion in the game, where: 
 $$
 0 \ \leq C_{MP} \ \textless \ \infty
 $$
-The preferences we use in our recommender system then are not discursively provided preferences like movie ratings for example, but rather behaviorally observed preferences. The use of $C_{MP}$ serves our aims well, as behaviorally observed preferences are more indicative of true preferences, and we can easily gain access to large datasets as Riot's API \cite{riotapi} allows us to grab each player's mastery points of all champions. We then used this dataset of 2514 random players and their respective $C_{MP}$ values to build our recommender. However, because $0 \ \leq C_{MP} \ \textless \ \infty$, we normalized these scores to a scale of 1-10 using a $ln$ normalization (PUT MORE HERE). Our dataset and code is available at \cite{github}. 
+Every time a player selects a champion for a game, the $C_{MP}$ for that champion increases by an integer value depending on their performance. There is no way to decrease $C_{MP}$. The preferences we use in our recommender system then are not discursively provided preferences like movie ratings for example, but rather behaviorally observed preferences. The use of $C_{MP}$ serves our aims well, as behaviorally observed preferences are more indicative of true preferences, and we can easily gain access to large datasets as Riot's API \cite{riotapi} allows us to grab each player's mastery points of all champions. We then used this dataset of 2514 random players and their respective $C_{MP}$ values to build our recommender. However, because $0 \ \leq C_{MP} \ \textless \ \infty$, we normalized these scores to a scale of 1-100. A user's most played champion is rated as a 100, regardless of the $C_{MP}$ value. A user that plays the game much more frequently would have a higher $C_{MP}$ overall than a user who plays infrequently. Our dataset and code is available at \cite{github}. 
 \subsubsection{Finding recommendations}
-We queried the system with a player's summoner name and used Riot's API in order to find their player ID. We then used this ID to find their top three champions sorted by $C_{MP}$. We selected only the top three champions as $C_{MP}$ are not ratings and a low $C_{MP}$ does not necessarily mean that a player does not enjoy a champion. We used these three $C_{MP}$ as $R_i(u)$ to find each $\hat{r}_{ui} : \forall i \in Champions$. Below is an example of a sample player's top three $C_{MP}$. \\\\
-\begin{tabular}{| l | l |}
+We queried the system with a player's summoner name and used Riot's API in order to find their player ID. We then used this ID to find their top five champions sorted by $C_{MP}$. We selected only the top five champions as $C_{MP}$ are not ratings and a low $C_{MP}$ does not necessarily mean that a player does not enjoy a champion. We used these five $C_{MP}$ as the user's preferences to find each $\hat{r}_{ui} : \forall i \in Champions$. Below is an example of a sample player's top five $C_{MP}$ and their normalized $C_{MP}$ ratings. \\\\
+\begin{tabular}{| l | l | l |}
     \hline
-    Champion & $C_{MP}$ \\ \hline
-    Nami & 367,191  \\ 
-    Zyra & 136,709 \\
-    Cassiopeia & 106,064 \\
+    Champion & $C_{MP}$ & Normalized $C_{MP}$ \\ \hline
+    Nami & 367,191 & 100\\ 
+    Zyra & 136,709 & 38 \\
+    Cassiopeia & 106,064 & 29 \\
+    Janna & 89,306 & 25\\
+    Lulu & 59,486 & 17\\
     \hline
 \end{tabular}
 \vspace{.2cm} \\ \noindent
 After the system calculates each $\hat{r}_{ui}$, it sorts these scores and outputs the top three respective champions as recommendations. 
 \subsection{Results}
-TBA.
-\subsection{Discussion}
-As $n=3$ experts in the field, we think this is aight (TBA).
+Because our system gives recommendations, we do not have an explicit accuracy rating. In order to get a preliminary measure of evaluation, we ran a preliminary user study with a sample size of $n=30$ among volunteers polled from LOLUTD (League of Legends at UTD). Our study was designed to ask a user their perceived champion ratings for 10 champions. 5 of which are pulled from our systems top recommendations, and 5 which are randomly picked from the remaining pool of champions. The placement of the questions is randomly determined to avoid introducing bias. We then analyzed the mean ratings given by the user. Our hypothesis is that the system recommendations score significantly higher than a random recommendation. Below is an example of a survey given to a user: 
+\begin{flushleft} 
+\textit{* indicates a random recommendation. This is not visible to the subject}\\
+\centering
+\begingroup
+\setlength{\tabcolsep}{10pt} % Default value: 6pt
+\renewcommand{\arraystretch}{1.5} % Default value: 1
+\begin{tabular}{|l r|}
+    \hline
+    \multicolumn{2}{|p{.9\linewidth}|}{%\begin{minipage}[t]{.5\columnwidth}
+    How would you rate the enjoyability of each champion from 1-10?} \\
+    %\end{minipage}} \\
+    \multicolumn{2}{|p{.9\linewidth}|}{1 = I do not like playing this champion} \\
+    \multicolumn{2}{|p{.9\linewidth}|}{10 = This champion is very enjoyable to play} \\
+     1. Karma & \rule{1cm}{1pt} \\ 
+     2. Graves *  & \rule{1cm}{1pt} \\
+     3. Jax * & \rule{1cm}{1pt} \\
+     4. Sona & \rule{1cm}{1pt} \\
+     5. Zilean & \rule{1cm}{1pt} \\
+     6. Syndra * & \rule{1cm}{1pt} \\
+     7. Thresh & \rule{1cm}{1pt} \\
+     8. Warwick * & \rule{1cm}{1pt} \\
+     9. Zed & \rule{1cm}{1pt} \\ 
+     10. Draven * & \rule{1cm}{1pt} \\
+     \hline
+\end{tabular}
+\endgroup
+\end{flushleft}
+\newpage
+\noindent We ran a statistical test of significance using a one-sided 2-Sample T-test on our data. Below are our stated hypotheses:  
+\begin{align*}
+H_0: \mu = \mu_{0} \\
+H_a: \mu > \mu_{0} 
+\end{align*}
+where $\mu$ is the mean of the recommended set scores and $\mu_{0}$ is the mean of the random set scores. \\
+Our dataset has values of: 
+\begin{align*}
+\mu& = 6.4567 \\
+\sigma& = 2.18286 \\
+\mu_{0}& = 5.18 \\
+\sigma_{0}& = 2.2340 \\
+n = n_{0}& = 30
+\end{align*}
+where naught values correspond to the random set statistics.
+After running our one-sided 2-Sample t-Test, we found that $t=2.2387$ and $p=0.01451$. With $ \alpha = 0.05$, we reject $H_0$ in favor of $H_a$. Our results are statistically significant. Our user study results are available at \cite{github}. 
+\section{Discussion}
+\subsection{Parameter tuning}
+The recommender tested in our human user study made use of the naive Surprise SVD model. The default parameters are the following \cite{Surprise}: 
+\begin{align*}
+    epoch& = 20 \\
+    \lambda&  = 0.005 \\
+    \upeta& = 0.02
+\end{align*}
+where $\lambda$ is the regularization term and $\upeta$ is the learning rate. The results obtained in the user study indicate that the SVD model is appropriate for a champion recommender system. Following this validation, we tuned these values using a grid search approach \cite{Surprise}. The optimal parameters found are the following:
+\begin{align*}
+    epoch& = 20 \\
+    \lambda& = 0.4 \\
+    \upeta& = 0.0005
+\end{align*}
+By using these parameters instead, we could likely obtain even stronger results in a human user study. 
+\subsection{Exploration of other algorithms}
+We also attempted to apply the Slope One \cite{lemire2005slope} and the SVD++ algorithms to our dataset and obtained unpromising results. Slope One is very susceptible to popularity bias in which popular items are frequently recommended. Highly popular champions such as Ezreal, Lee Sin and Yasuo will have high recommendation values for players regardless of their input. The SVD++ algorithm had much too high of time complexity to be feasible for our project. The Surprise implementation gave an example runtime for a dataset consisting of 1 million rows. The runtimes for SVD and SVD++ are 0:02:13 and 2:54:19 \cite{Surprise} respectively for this dataset. For our dataset of 311,727 rows, a single run took over an hour.
+\subsection{Domain Observations}
+In League of Legends, the current in-game strategy is known as a "meta" \cite{kou2014governance}. The meta changes frequently and different champions fall in and out of favor. Our system distributes recommendations across all metas because $C_{MP}$ accumulates over the history of the game. 
 \section{Future Work}
-Future work would mainly detail an evaluation of the results. While we believe that our recommendations are suitable for a user, it would be important to run a study to see if a user actually does enjoy their champion recommendations. A possible study could be designed to give a user $n$ recommendations that contain a fixed number of recommendations selected by our system as well as random recommendations. We could then ask a user to rate each champion after playing it and see if the system recommendations score significantly higher than a random recommendation. \\ \indent In addition, the algorithm loads in the dataset each time it is compiled. This dataset is very large and contains 311,000 rows. A future implementation could store data in a database such as MySQL and reduce runtime significantly, especially with extremely large datasets. 
-\section{Conclusion}
-League of legends is a good game (TBA).
+Although our results are significant, they are also preliminary. It is important to note that the study conducted is not representative of the overall population and further work will be needed to truly evaluate this recommender. While we believe that our recommendations are suitable for a user, it would be important to run a larger study to see if a user actually does enjoy their champion recommendations. \\ \indent In addition, the algorithm loads in the dataset each time it is compiled. This dataset is very large and contains 311,727 rows. A future implementation could store data in a database such as MySQL and reduce runtime significantly, especially with extremely large datasets.
 \nocite{*}
 \bibliographystyle{IEEEtran}
 \bibliography{annot}

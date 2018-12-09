@@ -7,29 +7,23 @@
 \begin{document}
 \maketitle
 \section{Introduction}
-League of Legends, originally released in 2009 by Riot, is the most widely played game worldwide \cite{gaudiosi_2013}. There is an estimated 100 million active players each month as of 2016 \cite{volk_2016}. The game currently has 141 playable characters, known as champions, from which players can choose from at the start of every match \cite{champlist}. These champions have widely varied play styles and abilities that allow a player to truly customize their way of playing League of Legends. With so many available champions, we wanted to create a recommendation system that would enable players to find out what other champions they might like based on their current champion preferences.
+League of Legends, originally released in 2009 by Riot Games, is the most widely played game worldwide \cite{gaudiosi_2013}. There is an estimated 100 million active players each month as of 2016 \cite{volk_2016}. The game currently has 141 playable characters, known as champions, from which players can choose from at the start of every match \cite{champlist}. These champions have widely varied play styles and abilities that allow a player to truly customize their way of playing League of Legends. With so many available champions, we wanted to create a recommendation system that would enable players to discover other champions they might like based on their current champion preferences.
 
 \section{Problem Definition and Algorithm}
 \subsection{Task Definition}
 The input to our system is a player’s unique username, known as a summoner name. We then pull this player’s champion preferences, compare these preferences with our model, and output five recommended champions.
 \subsection{Algorithm Definition}
-We built champion recommendations using an 
-%item-to-item 
-\textbf{item-based}
-collaborative filtering approach \cite{Sarwar:2001}, specifically the SVD algorithm (singular value decomposition). 
-\textbf{This domain is suitable for collaborative filtering as there is a massive base of users with diverse tastes and high user engagement, thereby avoiding the common issues of cold starts, rating sparsity, and user homogeneity.} 
-%\textbf{Thus the common issues of cold starts, rating sparsity, and user homogeneity in collaborative filtering are avoided.}
-\textbf{The SVD algorithm provides low rank factor discovery and user-champion mapping onto this latent space, thereby mitigating popularity bias and strongly tailoring champion recommendations to a user's specific taste.}
-%We chose this approach due to its
-\textbf{Furthermore, its}
-success in predicting Netflix recommendations, which we believe is similar to champion preferences as both are based on behaviorally observed data \cite{paterek2007improving}. 
-We used a straightforward Python implementation of the SVD algorithm called Surprise \cite{Surprise}. \midskip
+We built our champion recommender using a collaborative filtering approach \cite{Sarwar:2001}, specifically the SVD algorithm (singular value decomposition). 
+This domain is suitable for collaborative filtering as there is a massive base of users with diverse tastes and high user engagement, thus avoiding the common issues of cold starts, rating sparsity, and user homogeneity.
+The SVD algorithm provides low rank latent factor discovery and user-champion mapping onto this latent space, thereby mitigating popularity bias and strongly tailoring champion recommendations to a user's specific taste.
+Furthermore, its success in a domain with similar characteristics, Netflix recommendations, proved promising \cite{paterek2007improving}.
+We utilized a Python implementation of the SVD algorithm in the Surprise library \cite{Surprise}. \medskip
 This implementation calculates a prediction $\hat{r}_{ui}$ using the following equation:
 $$
     \hat{r}_{ui} = \mu + b_u + b_i + q_i^Tp_u
 $$
 Where if user $u$ is unknown, then the bias $b_u$ and factors $p_u$ are zero. The same applies for item $i$ and $b_i$ and $q_i$. The estimations are done by minimizing the squared error function
-\cite{koren2009matrix} :
+\cite{koren2009matrix}:
 $$
     \min_{p*,q*,b*} \sum_{r_{ui} \in R_{train}} \left(r_{ui} - \hat{r}_{ui} \right)^2 + 
 \lambda\left(b_i^2 + b_u^2 + ||q_i||^2 + ||p_u||^2\right)
@@ -45,13 +39,14 @@ where $e_{ui} = r_{ui} - \hat{r}_{ui}$. Baselines are initialized to zero and us
 \section{Experimental Evaluation}
 \subsection{Methodology}
 \subsubsection{Building a dataset}
-SVD uses ratings of users in order to build a model that can provide recommendations \cite{koren2009matrix}. While we do not have explicit ratings of how much a player enjoys a champion, we are able to find their preferences based on how often they play a champion. We pulled champion preferences of 2514 random active\footnote{User has played within the last month} players using Riot’s official API \cite{riotapi} in order to train our model. These champion preferences are represented as Champion Mastery Points $(C_{MP})$, which is an integer measure of how much a player has played a certain champion. A player has a $C_{MP}$ for each champion in the game, where: 
+SVD uses ratings of users in order to build a model that can provide recommendations \cite{koren2009matrix}. While we do not have explicit ratings of how much a player enjoys a champion, we are able to determine their preferences by how often they play a champion. We pulled champion preferences of 2514 random active\footnote{User has played within the last month} players using Riot’s official API \cite{riotapi} in order to train our model. These champion preferences are represented as Champion Mastery Points $(C_{MP})$, which is an integer measure of how much a player has played a certain champion. A player has a $C_{MP}$ for each champion in the game, where: 
 $$
 0 \ \leq C_{MP} \ \textless \ \infty
 $$
-Every time a player selects a champion for a game, the $C_{MP}$ for that champion increases by an integer value depending on their performance. There is no way to decrease $C_{MP}$. The preferences we use in our recommender system then are not discursively provided preferences like movie ratings for example, but rather behaviorally observed preferences. The use of $C_{MP}$ serves our aims well, as behaviorally observed preferences are more indicative of true preferences, and we can easily gain access to large datasets as Riot's API \cite{riotapi} allows us to grab each player's mastery points of all champions. We then used this dataset of 2514 random players and their respective $C_{MP}$ values to build our recommender. However, because $0 \ \leq C_{MP} \ \textless \ \infty$, we normalized these scores to a scale of 1-100. A user's most played champion is rated as a 100, regardless of the $C_{MP}$ value. A user that plays the game much more frequently would have a higher $C_{MP}$ overall than a user who plays infrequently. Our dataset and code is available at \cite{github}. 
+Every time a player selects a champion for a game, the $C_{MP}$ for that champion increases by an integer value depending on their performance. There is no way to decrease $C_{MP}$. 
+The use of $C_{MP}$ serves our aims well, as behaviorally observed preferences are more indicative of true preferences in this domain, and we can easily gain access to large datasets as Riot's API \cite{riotapi} allows us to grab each player's mastery points of all champions. We used this dataset of 2514 random players and their respective $C_{MP}$ values to build our recommender. However, because $0 \ \leq C_{MP} \ \textless \ \infty$, a user that plays the game more frequently would have a higher overall $C_{MP}$ than a user who plays less frequently. To combat this, we normalized these scores to a scale of 1-100, with a user's most played champion rated as a 100, regardless of their actual $C_{MP}$ value. Our dataset and code is available at \cite{github}. 
 \subsubsection{Finding recommendations}
-We queried the system with a player's summoner name and used Riot's API in order to find their player ID. We then used this ID to find their top five champions sorted by $C_{MP}$. We selected only the top five champions as $C_{MP}$ are not ratings and a low $C_{MP}$ does not necessarily mean that a player does not enjoy a champion. We used these five $C_{MP}$ as the user's preferences to find each $\hat{r}_{ui} : \forall i \in Champions$. Below is an example of a sample player's top five $C_{MP}$ and their normalized $C_{MP}$ ratings. \\\\
+We queried the system with a player's summoner name and used Riot's API in order to find their player ID. We then used this ID to find their top five champions sorted by $C_{MP}$. We selected only the top five champions as $C_{MP}$ are not explicit ratings and a low $C_{MP}$ does not necessarily mean that a player does not enjoy a champion. We used these five $C_{MP}$ as the user's preferences to find each $\hat{r}_{ui} : \forall i \in Champions$. Below is an example of a sample player's top five $C_{MP}$ and their normalized $C_{MP}$ ratings. \\\\
 \begin{tabular}{| l | l | l |}
     \hline
     Champion & $C_{MP}$ & Normalized $C_{MP}$ \\ \hline
@@ -63,20 +58,24 @@ We queried the system with a player's summoner name and used Riot's API in order
     \hline
 \end{tabular}
 \vspace{.2cm} \\ \noindent
-After the system calculates each $\hat{r}_{ui}$, it sorts these scores and outputs the top three respective champions as recommendations. 
+After the system calculates each $\hat{r}_{ui}$, it sorts these scores and outputs the top five respective champions as recommendations. 
+
 \subsection{Results}
-Because our system gives recommendations, we do not have an explicit accuracy rating. In order to get a preliminary measure of evaluation, we ran a preliminary user study with a sample size of $n=30$ among volunteers polled from LOLUTD (League of Legends at UTD). Our study was designed to ask a user their perceived champion ratings for 10 champions. 5 of which are pulled from our systems top recommendations, and 5 which are randomly picked from the remaining pool of champions. The placement of the questions is randomly determined to avoid introducing bias. We then analyzed the mean ratings given by the user. Our hypothesis is that the system recommendations score significantly higher than a random recommendation. Below is an example of a survey given to a user: 
+%Because our system gives recommendations, we do not have an explicit accuracy rating. 
+Although we will evaluate the theoretical accuracy of our model in section IV, we were primarily interested in how practical our recommendations are. To do this,
+
+we ran a preliminary user study with a sample size of $n=30$ among volunteers polled from LOLUTD (League of Legends at UTD). Our study was designed to ask a user their perceived champion ratings for 10 champions. 5 of which are pulled from our systems top recommendations, and 5 which are randomly picked from the remaining pool of champions. The placement of the questions is randomly determined to avoid introducing bias. We then analyzed the mean ratings given by the user. Our hypothesis is that the system recommendations score significantly higher than a random recommendation. Below is an example of a survey given to a user:
+\newpage
 \begin{flushleft} 
 \textit{* indicates a random recommendation. This is not visible to the subject}\\
-\centering
+%\centering
 \begingroup
-\setlength{\tabcolsep}{10pt} % Default value: 6pt
-\renewcommand{\arraystretch}{1.5} % Default value: 1
+\setlength{\tabcolsep}{10pt}
+\renewcommand{\arraystretch}{1.5} 
 \begin{tabular}{|l r|}
     \hline
-    \multicolumn{2}{|p{.9\linewidth}|}{%\begin{minipage}[t]{.5\columnwidth}
+    \multicolumn{2}{|p{.9\linewidth}|}{
     How would you rate the enjoyability of each champion from 1-10?} \\
-    %\end{minipage}} \\
     \multicolumn{2}{|p{.9\linewidth}|}{1 = I do not like playing this champion} \\
     \multicolumn{2}{|p{.9\linewidth}|}{10 = This champion is very enjoyable to play} \\
      1. Karma & \rule{1cm}{1pt} \\ 
@@ -93,7 +92,6 @@ Because our system gives recommendations, we do not have an explicit accuracy ra
 \end{tabular}
 \endgroup
 \end{flushleft}
-\newpage
 \noindent We ran a statistical test of significance using a one-sided 2-Sample T-test on our data. Below are our stated hypotheses:  
 \begin{align*}
 H_0: \mu = \mu_{0} \\
@@ -110,27 +108,48 @@ n = n_{0}& = 30
 \end{align*}
 where naught values correspond to the random set statistics.
 After running our one-sided 2-Sample t-Test, we found that $t=2.2387$ and $p=0.01451$. With $ \alpha = 0.05$, we reject $H_0$ in favor of $H_a$. Our results are statistically significant. Our user study results are available at \cite{github}. 
+
 \section{Discussion}
-\subsection{Parameter tuning}
-The recommender tested in our human user study made use of the naive Surprise SVD model. The default parameters are the following \cite{Surprise}: 
+\subsection{Parameter Tuning}
+The recommender tested in our user study made use of the naive SVD model in the Suprise library. 
+The default parameters are the following \cite{Surprise}: 
 \begin{align*}
     epoch& = 20 \\
     \lambda&  = 0.005 \\
     \upeta& = 0.02
 \end{align*}
-where $\lambda$ is the regularization term and $\upeta$ is the learning rate. The results obtained in the user study indicate that the SVD model is appropriate for a champion recommender system. Following this validation, we tuned these values using a grid search approach \cite{Surprise}. The optimal parameters found are the following:
+where $\lambda$ is the regularization term and $\upeta$ is the learning rate.
+The results obtained in the user study indicate that the SVD model is appropriate for a champion recommender system. 
+Following this practical validation, we tuned these model parameters using a grid search to maximize theoretical accuracy by minimizing RMSE \cite{Surprise}. 
+The optimal parameters found are the following:
 \begin{align*}
     epoch& = 20 \\
     \lambda& = 0.4 \\
     \upeta& = 0.0005
 \end{align*}
-By using these parameters instead, we could likely obtain even stronger results in a human user study. 
+By using these parameters for model fitting instead, stronger results in a user study would likely be obtained. 
+
 \subsection{Exploration of other algorithms}
-We also attempted to apply the Slope One \cite{lemire2005slope} and the SVD++ algorithms to our dataset and obtained unpromising results. Slope One is very susceptible to popularity bias in which popular items are frequently recommended. Highly popular champions such as Ezreal, Lee Sin and Yasuo will have high recommendation values for players regardless of their input. The SVD++ algorithm had much too high of time complexity to be feasible for our project. The Surprise implementation gave an example runtime for a dataset consisting of 1 million rows. The runtimes for SVD and SVD++ are 0:02:13 and 2:54:19 \cite{Surprise} respectively for this dataset. For our dataset of 311,727 rows, a single run took over an hour.
+We built models using the Slope One \cite{lemire2005slope} and the SVD++ algorithms in the Surprise library and obtained unpromising results.
+We found Slope One to be highly susceptible to popularity bias; popularly played champions such as Ezreal, Lee Sin and Yasuo were consistently recommended for users regardless of user preferences. 
+The SVD++ model has a time complexity too large for our project. 
+The Surprise library documentation gives an example runtime for a dataset consisting of 1 million rows. 
+The runtimes for SVD and SVD++ were 0:02:13 and 2:54:19 \cite{Surprise} respectively for this dataset. 
+For our dataset of 311,727 rows, a single run took over an hour.
+
 \subsection{Domain Observations}
-In League of Legends, the current in-game strategy is known as a "meta" \cite{kou2014governance}. The meta changes frequently and different champions fall in and out of favor. Our system distributes recommendations across all metas because $C_{MP}$ accumulates over the history of the game. 
+In League of Legends, the current most popular in-game strategy is known as a "meta" \cite{kou2014governance}. The meta changes frequently, causing different champions to fall in and out of favor.
+$C_{MP}$ is affected by this changing meta, since certain champions may be picked more or less often.
+However, since the data for our model is representative of champion ratings over the history of the game, rather than of any specific meta, we posit that the effects on $C_{MP}$ by meta are negligible. 
+Another consideration is the fact that champions themselves may change over the course of the game's history, with some of these champion reworks completely changing user's preferences regarding the champion.
+As $C_{MP}$ is maintained regardless of any changes to the champions, our model will be misled for some user preferences \cite{champUpdate}.
+
 \section{Future Work}
-Although our results are significant, they are also preliminary. It is important to note that the study conducted is not representative of the overall population and further work will be needed to truly evaluate this recommender. While we believe that our recommendations are suitable for a user, it would be important to run a larger study to see if a user actually does enjoy their champion recommendations. \\ \indent In addition, the algorithm loads in the dataset each time it is compiled. This dataset is very large and contains 311,727 rows. A future implementation could store data in a database such as MySQL and reduce runtime significantly, especially with extremely large datasets.
+Although our results are significant, they are also preliminary. It is important to note that the user study conducted is not representative of the overall population and further work will be needed to practically evaluate our recommender. 
+While we believe that our results are promising, it would be important to run a rigorous study to see if  users actually enjoy their champion recommendations.
+\\ \indent The previously discussed issues in \textit{Domain Observations} cannot be solved with the current level of access provided by Riot's API.
+A solution to these issues would require a more granular access to user data.
+
 \nocite{*}
 \bibliographystyle{IEEEtran}
 \bibliography{annot}

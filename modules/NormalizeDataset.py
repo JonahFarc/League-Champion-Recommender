@@ -47,6 +47,8 @@ def normalize(file1, file2):
             LastPlayedChamp=data[8])
         print(text)
         file.write(text)
+    file.close()
+    readfile.close()
 
-
-normalize("roster.csv", "normalized_roster.csv")
+if __name__ == "__main__":
+    normalize("roster.csv", "normalized_roster.csv")

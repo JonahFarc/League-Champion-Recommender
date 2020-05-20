@@ -34,6 +34,9 @@ def format(file1, file2):
             MasteryPointsNormalized=data[6])
         print(text)
         file.write(text)
+    file.close()
+    readfile.close()
 
 
-format("normalized_roster.csv", "final_roster.csv")
+if __name__ == "__main__":
+    format("normalized_roster.csv", "final_roster.csv")

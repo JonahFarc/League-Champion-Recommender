@@ -9,13 +9,12 @@ from surprise.model_selection import train_test_split, KFold
 url_base = "https://na1.api.riotgames.com/lol/"
 url_mastery = "champion-mastery/v3/champion-masteries/by-summoner/"
 url_summ_name = "summoner/v3/summoners/by-name/"
-API_KEY = "RGAPI-fe8e85f4-572e-41b0-94bc-7ad2dbb1c847"
 
 roster = 'user-study-roster.csv'
 max_champs = 5
 num_predictions = 5  # set to 'max' to return all predictions in descending order
 
-def get_mastery_from_id(summonerid, max_champs):
+def get_mastery_from_id(API_KEY, summonerid, max_champs):
     """
     Pulls the Mastery information from Riot's API, the top 5 champions of the summoner,
     and their normalized mastery points
@@ -51,7 +50,7 @@ def get_mastery_from_id(summonerid, max_champs):
         ratings_dict['rating'].append(normalized_points)
     return ratings_dict
 
-def get_mastery(summonername, max_champs):
+def get_mastery(API_KEY, summonername, max_champs):
     """
     Gets the summoner id of the player with the given summoner name and their dictionary
     from get_mastery_from_id
@@ -76,7 +75,7 @@ def get_mastery(summonername, max_champs):
         return 1, "ERROR", 1
 
     summonerid = summ_json["id"]
-    return summonerid, get_mastery_from_id(summonerid, max_champs), summ_json["name"]
+    return summonerid, get_mastery_from_id(API_KEY, summonerid, max_champs), summ_json["name"]
 
 def get_top_n(predictions, n=5):
     """
@@ -133,66 +132,65 @@ print(champ_map)
 print(summoners)
 exit(0)
 '''
-champ_map = {'266': 'Aatrox', '103': 'Ahri', '84': 'Akali', '12': 'Alistar', '32': 'Amumu', '34': 'Anivia',
-             '1': 'Annie', '22': 'Ashe', '136': 'Aurelion Sol', '268': 'Azir', '432': 'Bard', '53': 'Blitzcrank',
-             '63': 'Brand', '201': 'Braum', '51': 'Caitlyn', '164': 'Camille', '69': 'Cassiopeia', '31': "Cho'Gath",
-             '42': 'Corki', '122': 'Darius', '131': 'Diana', '119': 'Draven', '36': 'Dr. Mundo', '245': 'Ekko',
-             '60': 'Elise', '28': 'Evelynn', '81': 'Ezreal', '9': 'Fiddlesticks', '114': 'Fiora', '105': 'Fizz',
-             '3': 'Galio', '41': 'Gangplank', '86': 'Garen', '150': 'Gnar', '79': 'Gragas', '104': 'Graves',
-             '120': 'Hecarim', '74': 'Heimerdinger', '420': 'Illaoi', '39': 'Irelia', '427': 'Ivern', '40': 'Janna',
-             '59': 'Jarvan IV', '24': 'Jax', '126': 'Jayce', '202': 'Jhin', '222': 'Jinx', '145': "Kai'Sa",
-             '429': 'Kalista', '43': 'Karma', '30': 'Karthus', '38': 'Kassadin', '55': 'Katarina', '10': 'Kayle',
-             '141': 'Kayn', '85': 'Kennen', '121': "Kha'Zix", '203': 'Kindred', '240': 'Kled', '96': "Kog'Maw",
-             '7': 'LeBlanc', '64': 'Lee Sin', '89': 'Leona', '127': 'Lissandra', '236': 'Lucian', '117': 'Lulu',
-             '99': 'Lux', '54': 'Malphite', '90': 'Malzahar', '57': 'Maokai', '11': 'Master Yi', '21': 'Miss Fortune',
-             '62': 'Wukong', '82': 'Mordekaiser', '25': 'Morgana', '267': 'Nami', '75': 'Nasus', '111': 'Nautilus',
-             '76': 'Nidalee', '56': 'Nocturne', '20': 'Nunu & Willump', '2': 'Olaf', '61': 'Orianna', '516': 'Ornn',
-             '80': 'Pantheon', '78': 'Poppy', '555': 'Pyke', '133': 'Quinn', '497': 'Rakan', '33': 'Rammus',
-             '421': "Rek'Sai", '58': 'Renekton', '107': 'Rengar', '92': 'Riven', '68': 'Rumble', '13': 'Ryze',
-             '113': 'Sejuani', '35': 'Shaco', '98': 'Shen', '102': 'Shyvana', '27': 'Singed', '14': 'Sion',
-             '15': 'Sivir', '72': 'Skarner', '37': 'Sona', '16': 'Soraka', '50': 'Swain', '134': 'Syndra',
-             '223': 'Tahm Kench', '163': 'Taliyah', '91': 'Talon', '44': 'Taric', '17': 'Teemo', '412': 'Thresh',
-             '18': 'Tristana', '48': 'Trundle', '23': 'Tryndamere', '4': 'Twisted Fate', '29': 'Twitch', '77': 'Udyr',
-             '6': 'Urgot', '110': 'Varus', '67': 'Vayne', '45': 'Veigar', '161': "Vel'Koz", '254': 'Vi',
-             '112': 'Viktor', '8': 'Vladimir', '106': 'Volibear', '19': 'Warwick', '498': 'Xayah', '101': 'Xerath',
-             '5': 'Xin Zhao', '157': 'Yasuo', '83': 'Yorick', '154': 'Zac', '238': 'Zed', '115': 'Ziggs',
-             '26': 'Zilean', '142': 'Zoe', '143': 'Zyra'}
-summoners = {}
 
-# read info from roster
-df = pd.read_csv(roster, header=None, names=['userID', 'itemID', 'rating'])
-mean = df['rating'].mean()
-dfreader = Reader(rating_scale=(1, 100))
-# data = Dataset.load_from_df(df[['userID', 'itemID', 'rating']], dfreader)
-# trainset, testset = train_test_split(data, shuffle=False, test_size=1)
-# trainset = data.build_full_trainset()
+def recommend(API_KEY, summ_name, max_champs, num_predictions, file):
+    champ_map = {'266': 'Aatrox', '103': 'Ahri', '84': 'Akali', '12': 'Alistar', '32': 'Amumu', '34': 'Anivia',
+                 '1': 'Annie', '22': 'Ashe', '136': 'Aurelion Sol', '268': 'Azir', '432': 'Bard', '53': 'Blitzcrank',
+                 '63': 'Brand', '201': 'Braum', '51': 'Caitlyn', '164': 'Camille', '69': 'Cassiopeia', '31': "Cho'Gath",
+                 '42': 'Corki', '122': 'Darius', '131': 'Diana', '119': 'Draven', '36': 'Dr. Mundo', '245': 'Ekko',
+                 '60': 'Elise', '28': 'Evelynn', '81': 'Ezreal', '9': 'Fiddlesticks', '114': 'Fiora', '105': 'Fizz',
+                 '3': 'Galio', '41': 'Gangplank', '86': 'Garen', '150': 'Gnar', '79': 'Gragas', '104': 'Graves',
+                 '120': 'Hecarim', '74': 'Heimerdinger', '420': 'Illaoi', '39': 'Irelia', '427': 'Ivern', '40': 'Janna',
+                 '59': 'Jarvan IV', '24': 'Jax', '126': 'Jayce', '202': 'Jhin', '222': 'Jinx', '145': "Kai'Sa",
+                 '429': 'Kalista', '43': 'Karma', '30': 'Karthus', '38': 'Kassadin', '55': 'Katarina', '10': 'Kayle',
+                 '141': 'Kayn', '85': 'Kennen', '121': "Kha'Zix", '203': 'Kindred', '240': 'Kled', '96': "Kog'Maw",
+                 '7': 'LeBlanc', '64': 'Lee Sin', '89': 'Leona', '127': 'Lissandra', '236': 'Lucian', '117': 'Lulu',
+                 '99': 'Lux', '54': 'Malphite', '90': 'Malzahar', '57': 'Maokai', '11': 'Master Yi', '21': 'Miss Fortune',
+                 '62': 'Wukong', '82': 'Mordekaiser', '25': 'Morgana', '267': 'Nami', '75': 'Nasus', '111': 'Nautilus',
+                 '76': 'Nidalee', '56': 'Nocturne', '20': 'Nunu & Willump', '2': 'Olaf', '61': 'Orianna', '516': 'Ornn',
+                 '80': 'Pantheon', '78': 'Poppy', '555': 'Pyke', '133': 'Quinn', '497': 'Rakan', '33': 'Rammus',
+                 '421': "Rek'Sai", '58': 'Renekton', '107': 'Rengar', '92': 'Riven', '68': 'Rumble', '13': 'Ryze',
+                 '113': 'Sejuani', '35': 'Shaco', '98': 'Shen', '102': 'Shyvana', '27': 'Singed', '14': 'Sion',
+                 '15': 'Sivir', '72': 'Skarner', '37': 'Sona', '16': 'Soraka', '50': 'Swain', '134': 'Syndra',
+                 '223': 'Tahm Kench', '163': 'Taliyah', '91': 'Talon', '44': 'Taric', '17': 'Teemo', '412': 'Thresh',
+                 '18': 'Tristana', '48': 'Trundle', '23': 'Tryndamere', '4': 'Twisted Fate', '29': 'Twitch', '77': 'Udyr',
+                 '6': 'Urgot', '110': 'Varus', '67': 'Vayne', '45': 'Veigar', '161': "Vel'Koz", '254': 'Vi',
+                 '112': 'Viktor', '8': 'Vladimir', '106': 'Volibear', '19': 'Warwick', '498': 'Xayah', '101': 'Xerath',
+                 '5': 'Xin Zhao', '157': 'Yasuo', '83': 'Yorick', '154': 'Zac', '238': 'Zed', '115': 'Ziggs',
+                 '26': 'Zilean', '142': 'Zoe', '143': 'Zyra'}
+    summoners = {}
 
-algo = SVD()
-algo.random_state = 1
-# print("Generating algorithm... (This may take a while)")
-# algo.fit(trainset)
-'''
-print("Algorithm Generated!")
-# define a cross-validation iterator
-print("Cross-Validating... (This may take a while)")
-kf = KFold(n_splits=3)
-for trainer, tester in kf.split(data):
-    # train and test algorithm.
-    algo.fit(trainer)
-    prediction = algo.test(tester)
+    # read info from roster
+    df = pd.read_csv(file, header=None, names=['userID', 'itemID', 'rating'])
+    mean = df['rating'].mean()
+    dfreader = Reader(rating_scale=(1, 100))
+    data = Dataset.load_from_df(df[['userID', 'itemID', 'rating']], dfreader)
+    # trainset, testset = train_test_split(data, shuffle=False, test_size=1)
+    trainset = data.build_full_trainset()
 
-    # Compute and print Root Mean Squared Error
-    accuracy.rmse(prediction, verbose=False)
-'''
-# print("All ready!")
-while True:
-    summ_name = input("What is your summoner name?\n")  # "Naru"
-    summ_id, ratings_dict, summ_name = get_mastery(summ_name, max_champs)
+    algo = SVD()
+    algo.random_state = 1
+    # print("Generating algorithm... (This may take a while)")
+    algo.fit(trainset)
+    '''
+    print("Algorithm Generated!")
+    # define a cross-validation iterator
+    print("Cross-Validating... (This may take a while)")
+    kf = KFold(n_splits=3)
+    for trainer, tester in kf.split(data):
+        # train and test algorithm.
+        algo.fit(trainer)
+        prediction = algo.test(tester)
+    
+        # Compute and print Root Mean Squared Error
+        accuracy.rmse(prediction, verbose=False)
+    '''
+    summ_id, ratings_dict, summ_name = get_mastery(API_KEY, summ_name, max_champs)
 
     # Problem occurred while trying to pull data from Riot API
     if ratings_dict == "ERROR":
         print()
-        continue
+        return "ERROR", ""
 
     # Add summoner name to list
     if str(summ_id) not in summoners:
@@ -210,7 +208,6 @@ while True:
     data = Dataset.load_from_df(dataframe[['userID', 'itemID', 'rating']], dfreader)
     trainset, testset = train_test_split(data, shuffle=False, test_size=length)
 
-    print("Calculating Champs... (This may take a while)")
     algo.fit(trainset)
     # Rating table should be {User, Champion, CMP}
     # Define the format
@@ -225,15 +222,17 @@ while True:
     top_n = get_top_n(predictions, num_predictions)
 
     output = ""
+    mastery = []
     for x in range(0, len(champ_map) - length):
+        mastery.append(ratings_dict['itemID'][-(x + length + 1)])
         output = champ_map[str(ratings_dict['itemID'][-(x + length + 1)])] + ", " + output
     output = output[:-2] + "\n"
     output = "Your top champions are: " + output
+
     # Print the recommended items for each user
     for uid, user_ratings in top_n.items():
-        # print(summoners[str(uid)], [(champ_map[str(iid)], riid) for (iid, riid) in user_ratings])
         output += "So I recommend: "
         for (iid, _) in user_ratings:
             output += champ_map[str(iid)] + ", "
         output = output[:-2] + "!\n"
-        print(output)
+    return top_n, mastery
